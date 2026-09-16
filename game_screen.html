@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Archery Game</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #ffffff;
+            --surface: #ffffff;
+            --surface-alt: #f5f6f8;
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --text: #111111;
+            --text-sub: #5f6368;
+            --accent: #2563eb;
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            will-change: transform, opacity;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+
+        .app.slide-out {
+            transform: translate3d(100%, 0, 0);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .header {
+            flex-shrink: 0;
+            background: var(--surface);
+            padding: 2px 16px;
+            padding-top: calc(1px + env(safe-area-inset-top, 0px));
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            color: var(--text);
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            width: 100%;
+            gap: 8px;
+        }
+
+        .header-home {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .btn-home {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease-out;
+            touch-action: manipulation;
+            padding: 0;
+            will-change: transform;
+        }
+
+        .btn-home:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-home:active {
+            background: rgba(0, 0, 0, 0.1);
+            transform: scale(0.94);
+        }
+
+        .btn-home.pressed {
+            transform: scale(0.95);
+        }
+
+        .btn-home img {
+            width: 52px;
+            height: 52px;
+            display: block;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .header-timer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            background: transparent;
+            border: none;
+            padding: 0;
+            min-width: auto;
+            white-space: nowrap;
+        }
+
+        .time-icon {
+            width: 3rem;
+            height: 3rem;
+            display: block;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .time-value {
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+        }
+
+        .header-coins {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: var(--text);
+            background: transparent;
+            border: none;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .header-coin-icon {
+            width: 3rem;
+            height: 3rem;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .coin-amount {
+            min-width: 30px;
+            text-align: center;
+            transition: color 0.2s;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .game-area-wrap {
+            flex: 1;
+            padding: 1px 1px 72px 1px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            background: var(--bg);
+            min-height: 0;
+            touch-action: none;
+            position: relative;
+        }
+
+        .board-container {
+            position: relative;
+            flex-shrink: 0;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: none;
+            background: var(--bg);
+        }
+
+        #gameArea {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0;
+            border: none;
+        }
+
+        #animationLayer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 100;
+            border-radius: 0;
+        }
+
+        #fullImagePreview {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            background-image: url("image.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+            pointer-events: none;
+            border-radius: 0;
+        }
+
+        .view-mode-active .game-block {
+            visibility: hidden !important;
+        }
+        .view-mode-active #animationLayer {
+            visibility: hidden !important;
+        }
+        .view-mode-active #fullImagePreview {
+            display: block !important;
+        }
+
+        .game-block {
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translate3d(0, 0, 0);
+            cursor: pointer;
+            touch-action: none;
+            z-index: 1;
+            background-image: url("image.png");
+            background-repeat: no-repeat;
+            background-size: 500% 800%;
+            background-color: transparent;
+            transition: none;
+            aspect-ratio: 1 / 1;
+        }
+
+        .game-block.empty-block {
+            background: #f5f6f8;
+            border-color: rgba(0, 0, 0, 0.08);
+            cursor: default;
+            z-index: 0;
+            background-image: none !important;
+        }
+
+        .game-block.tappable:active {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .game-block.clone-block {
+            position: absolute;
+            margin: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: transform 200ms ease-out;
+            will-change: transform;
+            backface-visibility: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            aspect-ratio: 1 / 1;
+        }
+
+        .game-actions {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .game-actions .game-action-btn {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+            touch-action: manipulation;
+            padding: 0;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border);
+        }
+
+        .game-actions .game-action-btn:hover {
+            background: var(--surface-alt);
+        }
+
+        .game-actions .game-action-btn:active {
+            background: #e8eaee;
+            transform: scale(0.92);
+        }
+
+        .game-actions .game-action-btn .view-icon {
+            width: 32px;
+            height: 32px;
+            display: block;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        /* ===== REWARD POPUP – IMAGE-BASED UI ===== */
+        .reward-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .reward-overlay.active {
+            display: flex;
+        }
+
+        .reward-popup {
+            position: relative;
+            display: inline-block;
+            max-width: 110vw;
+            width: auto;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            text-align: initial;
+            line-height: 0;
+            font-size: 0;
+        }
+
+        .reward-popup .popup-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .popup-image-btn {
+            position: absolute;
+            display: block;
+            padding: 0;
+            margin: 0;
+
+            background: transparent;
+            border: none;
+            outline: none;
+
+            color: transparent;
+            box-shadow: none;
+
+            cursor: pointer;
+
+            -webkit-tap-highlight-color: transparent;
+            appearance: none;
+            -webkit-appearance: none;
+
+            opacity: 1;
+            z-index: 5;
+        }
+
+        .popup-image-btn:hover,
+        .popup-image-btn:focus,
+        .popup-image-btn:active {
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            color: transparent;
+            filter: none;
+            transform: none;
+        }
+
+        .popup-image-btn.coin-button {
+            left: 12%;
+            top: 76%;
+            width: 42%;
+            height: 15%;
+        }
+
+        .popup-image-btn.continue-button {
+            right: 2%;
+            top: 76%;
+            width: 42%;
+            height: 15%;
+        }
+
+        .popup-image-btn.cross-button {
+            right: 2%;
+            top: 12%;
+            width: 16%;
+            height: 15%;
+        }
+
+        .app,
+        .header,
+        .game-area-wrap,
+        #gameArea {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" role="application" aria-label="Archery Game">
+        <header class="header" role="banner">
+            <div class="header-grid">
+                <div class="header-timer" id="timerDisplay" aria-label="Elapsed time">
+                    <img src="time_icon.png" alt="" class="time-icon">
+                    <span class="time-value">00:00</span>
+                </div>
+                <div class="header-coins" aria-label="Coin count">
+                    <img src="coin.png" alt="" class="header-coin-icon">
+                    <span class="coin-amount" id="coinDisplay">0</span>
+                </div>
+                <div class="header-home">
+                    <button class="btn-home" aria-label="Home" id="homeBtn" type="button">
+                        <img src="home_button.png" alt="Home">
+                    </button>
+                </div>
+            </div>
+        </header>
+        <div class="game-area-wrap">
+            <div class="board-container">
+                <main id="gameArea" role="main" aria-label="Game world">
+                </main>
+                <div id="animationLayer"></div>
+                <div id="fullImagePreview"></div>
+            </div>
+            <div class="game-actions" aria-label="Game actions">
+                <button class="game-action-btn view-btn" type="button" aria-label="Show full image preview">
+                    <img src="off_view.png" alt="" class="view-icon">
+                </button>
+            </div>
+            <!-- ===== REWARD POPUP – IMAGE-BASED UI ===== -->
+            <div class="reward-overlay" id="rewardOverlay">
+                <div class="reward-popup">
+                    <img src="popup.png" class="popup-image" alt="">
+
+                    <button
+                        class="popup-image-btn coin-button"
+                        id="rewardClaimBtn"
+                        type="button"
+                        aria-label="Take Coins">
+                    </button>
+
+                    <button
+                        class="popup-image-btn continue-button"
+                        id="continueBtn"
+                        type="button"
+                        aria-label="Continue">
+                    </button>
+
+                    <button
+                        class="popup-image-btn cross-button"
+                        id="closeRewardBtn"
+                        type="button"
+                        aria-label="Close">
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         EXACT POPUNDER AD SCRIPT (unchanged, as required)
+         ============================================================ -->
+    <script src="https://pl31293069.profitableratecpmnetwork.com/50/0e/3d/500e3d37f4ff7408b700209c1158b472.js"></script>
+
+    <!-- Import map for Firebase 12.18.0 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js",
+                "firebase/analytics": "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js"
+            }
+        }
+    </script>
+
+    <!-- Main module script with Firebase integration (UNCHANGED) -->
+    <script type="module">
+        // ─── Firebase Imports ────────────────────────────────────────────────
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            onSnapshot,
+            serverTimestamp,
+            runTransaction,
+            collection
+        } from "firebase/firestore";
+        import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+        // ─── Firebase Configuration (my-life-cc185) ────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKug1_H5gfrI1Jd1lMR9LoXCtIaOymsBk",
+            authDomain: "my-life-cc185.firebaseapp.com",
+            projectId: "my-life-cc185",
+            storageBucket: "my-life-cc185.firebasestorage.app",
+            messagingSenderId: "1020199293322",
+            appId: "1:1020199293322:web:ee9e98f7753b2b45117873",
+            measurementId: "G-K3M0BT1CBZ"
+        };
+
+        // ─── Initialize Firebase ─────────────────────────────────────────────
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // ─── State ──────────────────────────────────────────────────────────
+        let userUid = null;
+        let firestoreUnsubscribe = null;
+        
+        // ─── Optimistic UI State ──────────────────────────────────────────
+        let pendingOperations = [];
+        let isProcessingQueue = false;
+
+        // ─── LocalStorage Helpers ─────────────────────────────────────────
+        function getLocalCoin() {
+            let localCoin = 0;
+            try {
+                const storedUserData = localStorage.getItem('userdata');
+                if (storedUserData) {
+                    const userData = JSON.parse(storedUserData);
+                    if (
+                        userData &&
+                        typeof userData.coin === 'number' &&
+                        Number.isFinite(userData.coin)
+                    ) {
+                        localCoin = Math.max(0, Math.floor(userData.coin));
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to read userdata from localStorage:', error);
+            }
+            return localCoin;
+        }
+
+        function saveCoinToLocalStorage(coin) {
+            const safeCoin =
+                typeof coin === 'number' &&
+                Number.isFinite(coin)
+                    ? Math.max(0, Math.floor(coin))
+                    : 0;
+
+            try {
+                const storedUserData =
+                    localStorage.getItem('userdata');
+
+                let userData = {};
+
+                if (storedUserData) {
+                    try {
+                        userData = JSON.parse(storedUserData) || {};
+                    } catch {
+                        userData = {};
+                    }
+                }
+
+                userData.coin = safeCoin;
+
+                localStorage.setItem(
+                    'userdata',
+                    JSON.stringify(userData)
+                );
+            } catch (error) {
+                console.warn(
+                    'Failed to save coin to localStorage:',
+                    error
+                );
+            }
+        }
+
+        // ─── Wait for game script to be ready ──────────────────────────────
+        function waitForGame() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (window.__game && window.__game.state) {
+                        resolve();
+                    } else {
+                        setTimeout(check, 50);
+                    }
+                };
+                check();
+            });
+        }
+
+        // ─── Ensure User Document Exists ──────────────────────────────────
+        async function ensureUserDocument(uid) {
+            if (!uid) return null;
+            const userRef = doc(db, 'users', uid);
+            try {
+                const snapshot = await getDoc(userRef);
+                const data = snapshot.data() || {};
+
+                if (!snapshot.exists()) {
+                    await setDoc(userRef, { coin: 0 });
+                    return { coin: 0 };
+                }
+
+                if (typeof data.coin !== 'number') {
+                    await setDoc(userRef, { coin: 0 }, { merge: true });
+                    const updatedSnap = await getDoc(userRef);
+                    return updatedSnap.data();
+                }
+
+                return data;
+            } catch (err) {
+                console.error('Error ensuring user document:', err);
+                return null;
+            }
+        }
+
+        /**
+         * ─── ATOMIC COIN UPDATE WITH HISTORY USING TRANSACTION ────────────
+         */
+        async function transactionCoinUpdate(uid, amount) {
+            if (!uid) {
+                console.warn('No user UID, cannot update Firestore.');
+                return false;
+            }
+
+            const userRef = doc(db, 'users', uid);
+
+            try {
+                const result = await runTransaction(db, async (transaction) => {
+                    const snapshot = await transaction.get(userRef);
+                    if (!snapshot.exists()) {
+                        transaction.set(userRef, { coin: 0 });
+                        return 0;
+                    }
+
+                    const data = snapshot.data();
+                    const currentCoin = typeof data.coin === 'number' ? data.coin : 0;
+                    const newCoinValue = Math.max(0, currentCoin + amount);
+
+                    transaction.update(userRef, { coin: newCoinValue });
+
+                    const historyCollectionRef = collection(userRef, 'userscoin');
+                    const historyRef = doc(historyCollectionRef);
+                    transaction.set(historyRef, {
+                        coin: newCoinValue,
+                        coinUpdatedTimestamp: serverTimestamp()
+                    });
+
+                    return newCoinValue;
+                });
+
+                return result;
+            } catch (err) {
+                console.error('Transaction coin update failed:', err);
+                return false;
+            }
+        }
+
+        /**
+         * ─── PROCESS PENDING OPERATIONS QUEUE ─────────────────────────────
+         */
+        async function processOperationQueue() {
+            if (isProcessingQueue || pendingOperations.length === 0 || !userUid) {
+                return;
+            }
+
+            isProcessingQueue = true;
+
+            const operation = pendingOperations.shift();
+            
+            const previousCoin = operation.previousCoin;
+            const optimisticCoin = operation.optimisticCoin;
+            
+            try {
+                const result = await transactionCoinUpdate(userUid, operation.amount);
+                
+                if (result !== false) {
+                    console.log(`✅ Transaction confirmed: ${previousCoin} → ${result}`);
+                    
+                    if (window.__game) {
+                        window.__game.state.coins = result;
+                        window.__game.updateCoinDisplay();
+                    }
+                    
+                    saveCoinToLocalStorage(result);
+                } else {
+                    console.warn(`❌ Transaction failed, rolling back from ${optimisticCoin} to ${previousCoin}`);
+                    
+                    if (window.__game) {
+                        window.__game.state.coins = previousCoin;
+                        window.__game.updateCoinDisplay();
+                    }
+                    
+                    const actualValue = await getCurrentCoinValue(userUid);
+                    if (typeof actualValue === 'number' && window.__game) {
+                        window.__game.state.coins = actualValue;
+                        window.__game.updateCoinDisplay();
+                        saveCoinToLocalStorage(actualValue);
+                    }
+                }
+            } catch (err) {
+                console.error('Error processing operation:', err);
+                if (window.__game) {
+                    window.__game.state.coins = previousCoin;
+                    window.__game.updateCoinDisplay();
+                }
+                try {
+                    const actualValue = await getCurrentCoinValue(userUid);
+                    if (typeof actualValue === 'number') {
+                        saveCoinToLocalStorage(actualValue);
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            } finally {
+                isProcessingQueue = false;
+                if (pendingOperations.length > 0) {
+                    setTimeout(processOperationQueue, 100);
+                }
+            }
+        }
+
+        /**
+         * ─── OPTIMISTIC COIN UPDATE ────────────────────────────────────────
+         */
+        function optimisticCoinUpdate(amount) {
+            if (!window.__game || typeof amount !== 'number') {
+                return false;
+            }
+
+            const currentCoin = window.__game.state.coins;
+            const optimisticCoin = Math.max(0, currentCoin + amount);
+
+            window.__game.state.coins = optimisticCoin;
+            window.__game.updateCoinDisplay();
+
+            pendingOperations.push({
+                amount: amount,
+                previousCoin: currentCoin,
+                optimisticCoin: optimisticCoin,
+                timestamp: Date.now()
+            });
+
+            if (!isProcessingQueue) {
+                setTimeout(processOperationQueue, 50);
+            }
+
+            return optimisticCoin;
+        }
+
+        async function incrementFirestoreCoin(amount) {
+            if (!userUid) {
+                console.warn('No user UID, cannot update Firestore.');
+                return false;
+            }
+            const optimisticResult = optimisticCoinUpdate(amount);
+            return optimisticResult;
+        }
+
+        async function updateFirestoreCoin(newCoinValue) {
+            if (!userUid) {
+                console.warn('No user UID, cannot update Firestore.');
+                return false;
+            }
+
+            const val = Math.max(0, newCoinValue);
+            const currentCoin = await getCurrentCoinValue(userUid);
+            const diff = val - currentCoin;
+            return optimisticCoinUpdate(diff);
+        }
+
+        async function getCurrentCoinValue(uid) {
+            if (!uid) return 0;
+            try {
+                const userRef = doc(db, 'users', uid);
+                const snapshot = await getDoc(userRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    return typeof data.coin === 'number' ? data.coin : 0;
+                }
+                return 0;
+            } catch (err) {
+                console.error('Error reading current coin value:', err);
+                return 0;
+            }
+        }
+
+        function setupRealtimeListener(uid) {
+            if (firestoreUnsubscribe) {
+                firestoreUnsubscribe();
+                firestoreUnsubscribe = null;
+            }
+            if (!uid) return;
+            
+            const userRef = doc(db, 'users', uid);
+            firestoreUnsubscribe = onSnapshot(userRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const coin = data.coin;
+                    
+                    if (typeof coin === 'number' && window.__game) {
+                        const currentLocal = window.__game.state.coins;
+                        const hasPendingOps = pendingOperations.length > 0 || isProcessingQueue;
+                        
+                        if (!hasPendingOps || currentLocal !== coin) {
+                            window.__game.state.coins = Math.max(0, coin);
+                            window.__game.updateCoinDisplay();
+                            saveCoinToLocalStorage(coin);
+                            
+                            if (pendingOperations.length > 0 && currentLocal === coin) {
+                                const lastOp = pendingOperations[pendingOperations.length - 1];
+                                if (lastOp && lastOp.optimisticCoin === coin) {
+                                    pendingOperations = [];
+                                    isProcessingQueue = false;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    console.warn('Firestore document no longer exists.');
+                }
+            }, (error) => {
+                console.warn('Firestore listener error:', error);
+            });
+        }
+
+        async function handleAuthState(user) {
+            if (user) {
+                userUid = user.uid;
+                console.log('Authenticated user UID:', userUid);
+
+                pendingOperations = [];
+                isProcessingQueue = false;
+
+                const userData = await ensureUserDocument(userUid);
+                if (userData && typeof userData.coin === 'number') {
+                    if (window.__game) {
+                        window.__game.state.coins = Math.max(0, userData.coin);
+                        window.__game.updateCoinDisplay();
+                    }
+                    saveCoinToLocalStorage(userData.coin);
+                }
+                setupRealtimeListener(userUid);
+            } else {
+                console.log('User not authenticated');
+                userUid = null;
+                if (firestoreUnsubscribe) {
+                    firestoreUnsubscribe();
+                    firestoreUnsubscribe = null;
+                }
+                if (window.__game) {
+                    window.__game.state.coins = 0;
+                    window.__game.updateCoinDisplay();
+                }
+                pendingOperations = [];
+                isProcessingQueue = false;
+                saveCoinToLocalStorage(0);
+            }
+        }
+
+        function overrideGameFunctions() {
+            if (!window.__game) return;
+
+            window.__game.setDeveloperCoins = function(value) {
+                const val = Math.max(0, value);
+                if (userUid) {
+                    updateFirestoreCoin(val);
+                } else {
+                    console.warn('No user UID, cannot set coins.');
+                }
+                return val;
+            };
+
+            window.__game.updateDeveloperCoins = function(amount) {
+                if (userUid) {
+                    const result = optimisticCoinUpdate(amount);
+                    return result;
+                } else {
+                    console.warn('No user UID, cannot update coins.');
+                    return window.__game.getTotalCoins();
+                }
+            };
+
+            window.__game.getTotalCoins = function() {
+                return window.__game.state.coins;
+            };
+
+            window.__game.getDeveloperCoins = function() {
+                return { totalCoins: window.__game.state.coins };
+            };
+
+            window.__game.saveDeveloperCoins = function() {
+                // No-op
+            };
+
+            console.log('✅ Firestore coin functions overridden with OPTIMISTIC UI UPDATE + atomic transactions.');
+        }
+
+        async function init() {
+            await waitForGame();
+            overrideGameFunctions();
+
+            const localCoin = getLocalCoin();
+            if (window.__game) {
+                window.__game.state.coins = localCoin;
+                window.__game.updateCoinDisplay();
+            }
+            console.log('📦 Local coin loaded from localStorage:', localCoin);
+
+            onAuthStateChanged(auth, (user) => {
+                handleAuthState(user);
+            });
+
+            window.__firestore = { db, auth, userUid, pendingOperations };
+            console.log('✅ Firebase Auth + Firestore sync initialized with LOCAL-FIRST coin display.');
+        }
+
+        init().catch(err => console.warn('Init error:', err));
+    </script>
+
+    <!-- Game Script (only Reward flow modified) -->
+    <script>
+        (function() {
+            'use strict';
+
+            function formatCoinDisplay(value) {
+                if (typeof value !== 'number' || isNaN(value) || value < 0) {
+                    value = 0;
+                }
+                value = Math.floor(value);
+
+                if (value < 10000) {
+                    return String(value);
+                }
+
+                if (value < 1000000) {
+                    var k = value / 1000;
+                    if (k % 1 === 0) {
+                        return String(k) + 'K';
+                    }
+                    var truncated = Math.floor(k * 10) / 10;
+                    return String(truncated) + 'K';
+                }
+
+                var m = value / 1000000;
+                if (m % 1 === 0) {
+                    return String(m) + 'M';
+                }
+
+                var decimalPlaces;
+                if (m >= 1000) {
+                    decimalPlaces = 0;
+                } else if (m >= 10) {
+                    decimalPlaces = 1;
+                } else {
+                    decimalPlaces = 2;
+                }
+
+                var factor = Math.pow(10, decimalPlaces);
+                var truncated = Math.floor(m * factor) / factor;
+                var str = String(truncated);
+
+                if (str.length > 4) {
+                    while (decimalPlaces > 0 && str.length > 4) {
+                        decimalPlaces--;
+                        factor = Math.pow(10, decimalPlaces);
+                        truncated = Math.floor(m * factor) / factor;
+                        str = String(truncated);
+                    }
+                    if (str.length > 4) {
+                        var intPart = Math.floor(m);
+                        str = String(intPart);
+                        while (str.length > 4) {
+                            intPart = Math.floor(intPart / 10);
+                            str = String(intPart);
+                        }
+                    }
+                }
+
+                return str + 'M';
+            }
+
+            var REWARD_COOLDOWN = 5;
+            var REWARD_AMOUNT = 1;
+
+            var gameState = {
+                rows: 8,
+                columns: 5,
+                emptyRow: 1,
+                emptyCol: 1,
+                elapsedSeconds: 0,
+                coins: 0,
+                timerInterval: null,
+                isRunning: false,
+                isAnimating: false,
+                board: [],
+                animTimeout: null,
+                resizePending: false
+            };
+
+            var timerDisplay = document.getElementById('timerDisplay');
+            var timeValue = timerDisplay.querySelector('.time-value');
+            var coinDisplay = document.getElementById('coinDisplay');
+            var gameArea = document.getElementById('gameArea');
+            var animationLayer = document.getElementById('animationLayer');
+            var boardContainer = document.querySelector('.board-container');
+            var gameAreaWrap = document.querySelector('.game-area-wrap');
+            var homeBtn = document.getElementById('homeBtn');
+
+            var viewBtn = document.querySelector('.view-btn');
+            var viewIcon = viewBtn.querySelector('.view-icon');
+
+            var rewardOverlay = document.getElementById('rewardOverlay');
+            var rewardClaimBtn = document.getElementById('rewardClaimBtn');
+            var continueBtn = document.getElementById('continueBtn');
+            var closeRewardBtn = document.getElementById('closeRewardBtn');
+
+            var isViewMode = false;
+
+            /* ============================================================
+               REWARD FLOW – best-effort browser-observable ad detection
+               ============================================================
+               Best-effort browser-level detection only.
+               Without an official ad-provider callback/API, this does not
+               prove that the third-party ad was actually viewed or
+               completed. It only observes browser-level side effects
+               (window blur / document visibility change) that are
+               consistent with an ad popunder attempt.
+
+               NOTE: We intentionally do NOT:
+                 - invent or call any guessed provider global function
+                 - use window.open('', '_blank', ...) as ad verification
+                 - assume setTimeout alone means the ad opened
+               ============================================================ */
+
+            // Detection window: how long we listen for an observable signal
+            // after letting the existing popunder script behave normally.
+            var AD_DETECTION_WINDOW_MS = 1200;
+
+            // Minimum wait after an observable ad-opening signal is detected.
+            var AD_REWARD_WAIT_MS = 5000;
+
+            // Reward flow state
+            var rewardPending = false;
+            var rewardAdDetected = false;
+            var rewardWaitTimer = null;
+            var rewardDetectionTimer = null;
+            var rewardClickGuard = false;
+
+            // Temporary event listener references (for cleanup)
+            var adBlurHandler = null;
+            var adVisibilityHandler = null;
+
+            function removeAdDetectionListeners() {
+                if (adBlurHandler) {
+                    window.removeEventListener('blur', adBlurHandler, true);
+                    adBlurHandler = null;
+                }
+                if (adVisibilityHandler) {
+                    document.removeEventListener('visibilitychange', adVisibilityHandler, true);
+                    adVisibilityHandler = null;
+                }
+            }
+
+            function cleanupRewardTimers() {
+                if (rewardWaitTimer) {
+                    clearTimeout(rewardWaitTimer);
+                    rewardWaitTimer = null;
+                }
+                if (rewardDetectionTimer) {
+                    clearTimeout(rewardDetectionTimer);
+                    rewardDetectionTimer = null;
+                }
+            }
+
+            function resetRewardFlow() {
+                cleanupRewardTimers();
+                removeAdDetectionListeners();
+                rewardPending = false;
+                rewardAdDetected = false;
+                rewardClickGuard = false;
+                rewardClaimBtn.disabled = false;
+            }
+
+            /* ------------------------------------------------------------
+               Detect a browser-observable ad-opening attempt.
+
+               We only listen for:
+                 • window "blur"  → focus may have moved to another window
+                 • document "visibilitychange" → visibilityState === "hidden"
+
+               Either signal is treated as a best-effort indication that
+               an ad-opening attempt occurred. If neither signal appears
+               within AD_DETECTION_WINDOW_MS, detection is considered
+               failed and no reward is granted.
+
+               The returned Promise resolves to true (detected) or false
+               (not detected). It is NOT proof of an actual ad impression.
+               ------------------------------------------------------------ */
+            function detectBrowserObservableAdOpen() {
+                return new Promise(function(resolve) {
+                    var settled = false;
+
+                    function settle(result) {
+                        if (settled) return;
+                        settled = true;
+
+                        if (rewardDetectionTimer) {
+                            clearTimeout(rewardDetectionTimer);
+                            rewardDetectionTimer = null;
+                        }
+
+                        removeAdDetectionListeners();
+                        resolve(result);
+                    }
+
+                    // Signal 1: window blur (focus may have shifted).
+                    adBlurHandler = function() {
+                        settle(true);
+                    };
+                    window.addEventListener('blur', adBlurHandler, true);
+
+                    // Signal 2: document visibility change to hidden.
+                    adVisibilityHandler = function() {
+                        if (document.visibilityState === 'hidden') {
+                            settle(true);
+                        }
+                    };
+                    document.addEventListener('visibilitychange', adVisibilityHandler, true);
+
+                    // Detection window timeout → not detected.
+                    rewardDetectionTimer = setTimeout(function() {
+                        settle(false);
+                    }, AD_DETECTION_WINDOW_MS);
+                });
+            }
+
+            /* ------------------------------------------------------------
+               Trigger the existing popunder behavior.
+
+               The network's script is already loaded via the exact <script>
+               tag in the HTML. We simply let it behave normally – we do
+               NOT call any guessed global trigger function and we do NOT
+               create a blank window as "verification".
+
+               A no-op is intentionally left here so the intent is clear:
+               the ad script itself is responsible for opening the ad.
+               ------------------------------------------------------------ */
+            function triggerExistingPopunderBehavior() {
+                // Intentionally empty: the exact popunder <script> tag
+                // already loaded on the page handles the ad-opening
+                // behavior on user interaction. We do not call any
+                // undocumented provider function and we do not open
+                // blank windows to fake verification.
+            }
+
+            /* ------------------------------------------------------------
+               Full reward flow:
+                 CLAIM
+                   ↓
+                 trigger existing popunder behavior
+                   ↓
+                 observe browser-level signal (blur / visibilitychange)
+                   ↓
+                 ┌───────────────────────┐
+                 │ Signal detected?      │
+                 ├──────────┬────────────┤
+                 │ NO       │ YES        │
+                 │          │            │
+                 │ NO COIN  │ Wait 5 sec │
+                 │ Retry    │      ↓     │
+                 │          │ +1 COIN    │
+                 └──────────┴────────────┘
+               ------------------------------------------------------------ */
+            function startRewardFlow() {
+                // Prevent overlapping / duplicate reward attempts.
+                if (rewardPending || rewardClickGuard) return;
+
+                rewardPending = true;
+                rewardAdDetected = false;
+                rewardClickGuard = true;
+
+                // Disable the claim button during the whole process.
+                rewardClaimBtn.disabled = true;
+
+                // 1) Let the existing popunder script behave normally.
+                triggerExistingPopunderBehavior();
+
+                // 2) Observe browser-level signals.
+                detectBrowserObservableAdOpen().then(function(adDetected) {
+                    rewardClickGuard = false;
+
+                    if (!adDetected) {
+                        // FAILURE: no browser-observable signal.
+                        // No coin, no modifyCoins call, allow retry.
+                        console.log(
+                            'No browser-observable ad-opening signal detected. ' +
+                            'Reward not granted.'
+                        );
+                        rewardPending = false;
+                        rewardAdDetected = false;
+                        rewardClaimBtn.disabled = false;
+                        return;
+                    }
+
+                    // SUCCESS (best-effort): observable signal detected.
+                    rewardAdDetected = true;
+                    console.log(
+                        'Browser-observable ad-opening signal detected. ' +
+                        'Waiting ' + (AD_REWARD_WAIT_MS / 1000) + 's before awarding.'
+                    );
+
+                    // 3) Wait at least 5 seconds after detection.
+                    rewardWaitTimer = setTimeout(function() {
+                        rewardWaitTimer = null;
+
+                        // Guard: only award if still pending + detected.
+                        if (!rewardPending || !rewardAdDetected) {
+                            rewardPending = false;
+                            rewardAdDetected = false;
+                            rewardClaimBtn.disabled = false;
+                            return;
+                        }
+
+                        // 4) Award using the EXISTING coin system.
+                        modifyCoins(REWARD_AMOUNT);
+
+                        // 5) Existing reward completion behavior.
+                        restartTimerAfterReward();
+
+                        // Finish flow.
+                        rewardPending = false;
+                        rewardAdDetected = false;
+                        rewardClaimBtn.disabled = false;
+                    }, AD_REWARD_WAIT_MS);
+                }).catch(function(err) {
+                    console.warn('Reward flow error:', err);
+                    rewardPending = false;
+                    rewardAdDetected = false;
+                    rewardClickGuard = false;
+                    rewardClaimBtn.disabled = false;
+                });
+            }
+
+            /* ------------------------------------------------------------
+               Existing helper functions (unchanged behavior)
+               ------------------------------------------------------------ */
+
+            function toggleViewMode() {
+                isViewMode = !isViewMode;
+                updateViewMode();
+            }
+
+            function updateViewMode() {
+                var preview = document.getElementById('fullImagePreview');
+                if (!preview) return;
+
+                if (isViewMode) {
+                    boardContainer.classList.add('view-mode-active');
+                    viewBtn.setAttribute('aria-label', 'Hide full image preview');
+                    viewIcon.src = 'on_view.png';
+                } else {
+                    boardContainer.classList.remove('view-mode-active');
+                    viewBtn.setAttribute('aria-label', 'Show full image preview');
+                    viewIcon.src = 'off_view.png';
+                }
+            }
+
+            viewBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleViewMode();
+            });
+
+            function createSolvedState() {
+                var rows = gameState.rows;
+                var cols = gameState.columns;
+                var state = [];
+                var id = 1;
+                for (var r = 0; r < rows; r++) {
+                    state[r] = [];
+                    for (var c = 0; c < cols; c++) {
+                        if (r === 0 && c === 0) {
+                            state[r][c] = 0;
+                        } else {
+                            state[r][c] = id++;
+                        }
+                    }
+                }
+                return state;
+            }
+
+            function shuffleState(state, numMoves) {
+                var rows = state.length;
+                var cols = state[0].length;
+                var emptyRow = 0,
+                    emptyCol = 0;
+
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        if (state[r][c] === 0) {
+                            emptyRow = r;
+                            emptyCol = c;
+                            break;
+                        }
+                    }
+                }
+
+                var lastDr = 0,
+                    lastDc = 0;
+
+                for (var i = 0; i < numMoves; i++) {
+                    var moves = [];
+                    var dirs = [
+                        [-1, 0],
+                        [1, 0],
+                        [0, -1],
+                        [0, 1]
+                    ];
+
+                    for (var d = 0; d < dirs.length; d++) {
+                        var dr = dirs[d][0];
+                        var dc = dirs[d][1];
+                        var nr = emptyRow + dr;
+                        var nc = emptyCol + dc;
+
+                        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                            if (dr === -lastDr && dc === -lastDc) continue;
+                            moves.push({ dr: dr, dc: dc, nr: nr, nc: nc });
+                        }
+                    }
+
+                    if (moves.length === 0) break;
+
+                    var move = moves[Math.floor(Math.random() * moves.length)];
+
+                    state[emptyRow][emptyCol] = state[move.nr][move.nc];
+                    state[move.nr][move.nc] = 0;
+
+                    lastDr = move.dr;
+                    lastDc = move.dc;
+                    emptyRow = move.nr;
+                    emptyCol = move.nc;
+                }
+
+                return state;
+            }
+
+            function renderFromState(state) {
+                clearAnimationState();
+                gameArea.innerHTML = '';
+                animationLayer.innerHTML = '';
+                gameState.isAnimating = false;
+
+                var rows = state.length;
+                var cols = state[0].length;
+                var board = [];
+
+                for (var r = 0; r < rows; r++) {
+                    board[r] = [];
+                    for (var c = 0; c < cols; c++) {
+                        board[r][c] = null;
+                    }
+                }
+
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        var tileId = state[r][c];
+
+                        if (tileId === 0) {
+                            var emptyBlock = document.createElement('div');
+                            emptyBlock.className = 'game-block empty-block';
+                            emptyBlock.style.gridRow = r + 1;
+                            emptyBlock.style.gridColumn = c + 1;
+                            emptyBlock.dataset.row = r + 1;
+                            emptyBlock.dataset.column = c + 1;
+                            emptyBlock.dataset.blockId = 'block-' + (r + 1) + '-' + (c + 1);
+                            board[r][c] = null;
+                            gameArea.appendChild(emptyBlock);
+                        } else {
+                            var origRow = Math.floor((tileId - 1) / 5) + 1;
+                            var origCol = ((tileId - 1) % 5) + 1;
+                            var block = createImageBlock(origRow, origCol);
+                            block.style.gridRow = r + 1;
+                            block.style.gridColumn = c + 1;
+                            board[r][c] = block;
+                            gameArea.appendChild(block);
+                        }
+                    }
+                }
+
+                gameState.board = board;
+
+                var emptyFound = false;
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        if (state[r][c] === 0) {
+                            gameState.emptyRow = r + 1;
+                            gameState.emptyCol = c + 1;
+                            emptyFound = true;
+                            break;
+                        }
+                    }
+                    if (emptyFound) break;
+                }
+
+                updateTappableHints();
+            }
+
+            function initializeShuffledPuzzle() {
+                var solved = createSolvedState();
+                var shuffleCount = Math.max(150, gameState.rows * gameState.columns * 4);
+                var shuffled = shuffleState(solved, shuffleCount);
+
+                var attempts = 0;
+                while (isGoalState(shuffled) && attempts < 5) {
+                    shuffled = shuffleState(solved, shuffleCount);
+                    attempts++;
+                }
+
+                renderFromState(shuffled);
+            }
+
+            function isGoalState(state) {
+                var goal = createSolvedState();
+                var rows = state.length;
+                var cols = state[0].length;
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        if (state[r][c] !== goal[r][c]) return false;
+                    }
+                }
+                return true;
+            }
+
+            function resetGame() {
+                if (isViewMode) {
+                    isViewMode = false;
+                    updateViewMode();
+                }
+
+                clearAnimationState();
+                stopTimer();
+                gameState.elapsedSeconds = 0;
+                gameState.emptyRow = 1;
+                gameState.emptyCol = 1;
+                updateTimerDisplay();
+                renderGameWorld();
+                scheduleBoardSize();
+                hideRewardPopup();
+                startTimer();
+            }
+
+            function goHome() {
+                resetGame();
+                gameArea.style.transition = 'background 0.15s';
+                gameArea.style.background = '#e8eaee';
+                setTimeout(function() {
+                    gameArea.style.background = '';
+                }, 200);
+            }
+
+            function formatTime(seconds) {
+                var m = Math.floor(seconds / 60);
+                var s = seconds % 60;
+                return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+            }
+
+            function updateTimerDisplay() {
+                timeValue.textContent = formatTime(gameState.elapsedSeconds);
+            }
+
+            function updateCoinDisplay() {
+                coinDisplay.textContent = formatCoinDisplay(gameState.coins);
+            }
+
+            function modifyCoins(amount) {
+                if (window.__game && window.__game.updateDeveloperCoins) {
+                    window.__game.updateDeveloperCoins(amount);
+                } else {
+                    console.warn('updateDeveloperCoins not available');
+                }
+            }
+
+            function showRewardPopup() {
+                rewardOverlay.classList.add('active');
+            }
+
+            function hideRewardPopup() {
+                resetRewardFlow();
+                rewardOverlay.classList.remove('active');
+            }
+
+            function startTimer() {
+                if (gameState.timerInterval) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                }
+                gameState.isRunning = true;
+                gameState.timerInterval = setInterval(function() {
+                    gameState.elapsedSeconds += 1;
+                    updateTimerDisplay();
+                    if (gameState.elapsedSeconds >= REWARD_COOLDOWN) {
+                        stopTimer();
+                        showRewardPopup();
+                    }
+                }, 1000);
+            }
+
+            function stopTimer() {
+                gameState.isRunning = false;
+                if (gameState.timerInterval) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                }
+            }
+
+            function resetTimer() {
+                stopTimer();
+                gameState.elapsedSeconds = 0;
+                updateTimerDisplay();
+            }
+
+            function restartTimerAfterReward() {
+                hideRewardPopup();
+                resetTimer();
+                startTimer();
+            }
+
+            function dismissRewardPopup() {
+                restartTimerAfterReward();
+            }
+
+            rewardClaimBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // New flow: let popunder behave → observe browser signal →
+                // if detected, wait 5s → +1 coin. If not detected, no coin.
+                startRewardFlow();
+            });
+
+            continueBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissRewardPopup();
+            });
+
+            closeRewardBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissRewardPopup();
+            });
+
+            function clearAnimationState() {
+                if (gameState.animTimeout) {
+                    clearTimeout(gameState.animTimeout);
+                    gameState.animTimeout = null;
+                }
+                animationLayer.innerHTML = '';
+                var allBlocks = gameArea.querySelectorAll('.game-block');
+                for (var i = 0; i < allBlocks.length; i++) {
+                    allBlocks[i].style.visibility = '';
+                }
+                gameState.isAnimating = false;
+            }
+
+            function createImageBlock(originalRow, originalCol) {
+                var block = document.createElement('div');
+                block.className = 'game-block';
+                var x = ((originalCol - 1) / (gameState.columns - 1)) * 100;
+                var y = ((originalRow - 1) / (gameState.rows - 1)) * 100;
+                block.style.backgroundPosition = x + '% ' + y + '%';
+                block.dataset.originalRow = originalRow;
+                block.dataset.originalColumn = originalCol;
+                block.dataset.row = originalRow;
+                block.dataset.column = originalCol;
+                block.dataset.blockId = 'block-' + originalRow + '-' + originalCol;
+                block.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var r = parseInt(this.dataset.row);
+                    var c = parseInt(this.dataset.column);
+                    tryMoveBlock(r, c);
+                });
+                return block;
+            }
+
+            function renderGameWorld() {
+                if (isViewMode) {
+                    isViewMode = false;
+                    updateViewMode();
+                }
+
+                clearAnimationState();
+                gameArea.innerHTML = '';
+                animationLayer.innerHTML = '';
+                gameState.isAnimating = false;
+
+                var totalRows = gameState.rows;
+                var totalColumns = gameState.columns;
+
+                var board = [];
+                for (var r = 0; r < totalRows; r++) {
+                    board[r] = [];
+                    for (var c = 0; c < totalColumns; c++) {
+                        board[r][c] = null;
+                    }
+                }
+
+                for (var row = 1; row <= totalRows; row++) {
+                    for (var col = 1; col <= totalColumns; col++) {
+                        if (row === 1 && col === 1) continue;
+                        var block = createImageBlock(row, col);
+                        block.style.gridRow = row;
+                        block.style.gridColumn = col;
+                        board[row - 1][col - 1] = block;
+                        gameArea.appendChild(block);
+                    }
+                }
+
+                var emptyBlock = document.createElement('div');
+                emptyBlock.className = 'game-block empty-block';
+                emptyBlock.style.gridRow = 1;
+                emptyBlock.style.gridColumn = 1;
+                emptyBlock.dataset.row = 1;
+                emptyBlock.dataset.column = 1;
+                emptyBlock.dataset.blockId = 'block-1-1';
+                board[0][0] = null;
+                gameArea.appendChild(emptyBlock);
+
+                gameState.board = board;
+                gameState.emptyRow = 1;
+                gameState.emptyCol = 1;
+                updateTappableHints();
+            }
+
+            function calculateBoardSize() {
+                var wrapRect = gameAreaWrap.getBoundingClientRect();
+                var wrapStyle = getComputedStyle(gameAreaWrap);
+                var padX = parseFloat(wrapStyle.paddingLeft) + parseFloat(wrapStyle.paddingRight);
+                var padY = parseFloat(wrapStyle.paddingTop) + parseFloat(wrapStyle.paddingBottom);
+
+                var availWidth = wrapRect.width - padX;
+                var availHeight = wrapRect.height - padY;
+
+                var cols = gameState.columns;
+                var rows = gameState.rows;
+
+                var cellFromWidth = availWidth / cols;
+                var cellFromHeight = availHeight / rows;
+                var cellSize = Math.min(cellFromWidth, cellFromHeight);
+
+                cellSize = Math.floor(cellSize);
+
+                if (cellSize < 1) cellSize = 1;
+
+                var boardWidth = cellSize * cols;
+                var boardHeight = cellSize * rows;
+
+                return {
+                    cellSize: cellSize,
+                    boardWidth: boardWidth,
+                    boardHeight: boardHeight
+                };
+            }
+
+            function applyBoardSize() {
+                var size = calculateBoardSize();
+                var cellSize = size.cellSize;
+                var boardWidth = size.boardWidth;
+                var boardHeight = size.boardHeight;
+
+                boardContainer.style.width = boardWidth + 'px';
+                boardContainer.style.height = boardHeight + 'px';
+
+                gameArea.style.gridTemplateColumns = 'repeat(' + gameState.columns + ', ' + cellSize + 'px)';
+                gameArea.style.gridTemplateRows = 'repeat(' + gameState.rows + ', ' + cellSize + 'px)';
+
+                var allBlocks = gameArea.querySelectorAll('.game-block');
+                for (var i = 0; i < allBlocks.length; i++) {
+                    allBlocks[i].style.width = cellSize + 'px';
+                    allBlocks[i].style.height = cellSize + 'px';
+                }
+            }
+
+            function scheduleBoardSize() {
+                if (gameState.resizePending) return;
+                gameState.resizePending = true;
+                requestAnimationFrame(function() {
+                    applyBoardSize();
+                    gameState.resizePending = false;
+                });
+            }
+
+            var resizeObserver = new ResizeObserver(function() {
+                scheduleBoardSize();
+            });
+
+            function initLayout() {
+                resizeObserver.observe(gameAreaWrap);
+                window.addEventListener('resize', scheduleBoardSize);
+                window.addEventListener('orientationchange', function() {
+                    setTimeout(scheduleBoardSize, 300);
+                });
+                scheduleBoardSize();
+            }
+
+            var touchStartX = 0,
+                touchStartY = 0,
+                touchStartTime = 0,
+                isSwiping = false;
+
+            gameAreaWrap.addEventListener('touchstart', function(e) {
+                var touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchStartTime = Date.now();
+                isSwiping = false;
+            }, { passive: true });
+
+            gameAreaWrap.addEventListener('touchmove', function(e) {
+                if (e.touches.length !== 1) return;
+                var touch = e.touches[0];
+                var dx = touch.clientX - touchStartX;
+                var dy = touch.clientY - touchStartY;
+                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+                    isSwiping = true;
+                }
+            }, { passive: true });
+
+            gameAreaWrap.addEventListener('touchend', function(e) {
+                if (!isSwiping) return;
+                var dt = Date.now() - touchStartTime;
+                if (dt > 400) return;
+                var touch = e.changedTouches[0];
+                var dx = touch.clientX - touchStartX;
+                var dy = touch.clientY - touchStartY;
+                var absDx = Math.abs(dx);
+                var absDy = Math.abs(dy);
+                if (Math.max(absDx, absDy) < 30) return;
+
+                var er = gameState.emptyRow;
+                var ec = gameState.emptyCol;
+                var targetRow = er,
+                    targetCol = ec;
+
+                if (absDx > absDy) {
+                    if (dx > 0) {
+                        targetCol = ec - 1;
+                    } else {
+                        targetCol = ec + 1;
+                    }
+                } else {
+                    if (dy > 0) {
+                        targetRow = er - 1;
+                    } else {
+                        targetRow = er + 1;
+                    }
+                }
+
+                if (targetRow < 1 || targetRow > gameState.rows || targetCol < 1 || targetCol > gameState.columns) {
+                    return;
+                }
+                tryMoveBlock(targetRow, targetCol);
+            }, { passive: true });
+
+            document.addEventListener('keydown', function(e) {
+                var er = gameState.emptyRow;
+                var ec = gameState.emptyCol;
+                var targetRow = er,
+                    targetCol = ec;
+
+                switch (e.key) {
+                    case 'ArrowUp':
+                        targetRow = er + 1;
+                        break;
+                    case 'ArrowDown':
+                        targetRow = er - 1;
+                        break;
+                    case 'ArrowLeft':
+                        targetCol = ec + 1;
+                        break;
+                    case 'ArrowRight':
+                        targetCol = ec - 1;
+                        break;
+                    default:
+                        return;
+                }
+
+                if (targetRow < 1 || targetRow > gameState.rows || targetCol < 1 || targetCol > gameState.columns) {
+                    return;
+                }
+                e.preventDefault();
+                tryMoveBlock(targetRow, targetCol);
+            });
+
+            function getGameBlock(row, column) {
+                return gameState.board[row - 1] && gameState.board[row - 1][column - 1] ? gameState.board[row - 1][column -
+                    1] : null;
+            }
+
+            function tryMoveBlock(row, col) {
+                if (gameState.isAnimating) return;
+
+                var er = gameState.emptyRow;
+                var ec = gameState.emptyCol;
+                var rowDiff = Math.abs(row - er);
+                var colDiff = Math.abs(col - ec);
+
+                if (rowDiff + colDiff !== 1) return;
+                if (row === er && col === ec) return;
+
+                executeMove(row, col);
+            }
+
+            function executeMove(row, col) {
+                if (gameState.isAnimating) return;
+                gameState.isAnimating = true;
+
+                var er = gameState.emptyRow;
+                var ec = gameState.emptyCol;
+                var srcRow = row;
+                var srcCol = col;
+
+                var movingBlock = getGameBlock(srcRow, srcCol);
+                if (!movingBlock) {
+                    gameState.isAnimating = false;
+                    return;
+                }
+
+                var emptyElement = findEmptyElement();
+                if (!emptyElement) {
+                    gameState.isAnimating = false;
+                    return;
+                }
+
+                var layerRect = animationLayer.getBoundingClientRect();
+                var srcRect = movingBlock.getBoundingClientRect();
+                var dstRect = emptyElement.getBoundingClientRect();
+
+                var srcX = srcRect.left - layerRect.left;
+                var srcY = srcRect.top - layerRect.top;
+                var dstX = dstRect.left - layerRect.left;
+                var dstY = dstRect.top - layerRect.top;
+                var blockWidth = srcRect.width;
+                var blockHeight = srcRect.height;
+
+                var dx = dstX - srcX;
+                var dy = dstY - srcY;
+
+                var clone = movingBlock.cloneNode(true);
+                clone.className = 'game-block clone-block';
+                clone.style.left = srcX + 'px';
+                clone.style.top = srcY + 'px';
+                clone.style.width = blockWidth + 'px';
+                clone.style.height = blockHeight + 'px';
+                clone.style.margin = '0';
+                clone.style.transform = 'translate3d(0, 0, 0)';
+                clone.style.gridRow = 'auto';
+                clone.style.gridColumn = 'auto';
+                clone.style.pointerEvents = 'none';
+                clone.style.position = 'absolute';
+                clone.style.transition = 'transform 200ms ease-out';
+                clone.style.zIndex = '100';
+                clone.style.border = '1px solid rgba(0, 0, 0, 0.06)';
+                clone.style.borderRadius = '';
+                clone.style.backgroundImage = movingBlock.style.backgroundImage || 'url("image.png")';
+                clone.style.backgroundSize = movingBlock.style.backgroundSize || '500% 800%';
+                clone.style.backgroundPosition = movingBlock.style.backgroundPosition;
+                clone.style.backgroundRepeat = 'no-repeat';
+                clone.style.backgroundColor = 'transparent';
+                clone.style.willChange = 'transform';
+                clone.style.backfaceVisibility = 'hidden';
+                clone.classList.remove('tappable');
+                clone.removeAttribute('data-block-id');
+
+                movingBlock.style.visibility = 'hidden';
+
+                animationLayer.appendChild(clone);
+
+                void clone.offsetHeight;
+
+                clone.style.transform = 'translate3d(' + dx + 'px, ' + dy + 'px, 0)';
+
+                var completed = false;
+
+                function finishMove() {
+                    if (completed) return;
+                    completed = true;
+
+                    if (gameState.animTimeout) {
+                        clearTimeout(gameState.animTimeout);
+                        gameState.animTimeout = null;
+                    }
+
+                    clone.removeEventListener('transitionend', onTransitionEnd);
+
+                    clone.style.transition = 'none';
+                    clone.style.transform = 'translate3d(0, 0, 0)';
+
+                    gameState.board[srcRow - 1][srcCol - 1] = null;
+                    gameState.board[er - 1][ec - 1] = movingBlock;
+
+                    movingBlock.style.gridRow = er;
+                    movingBlock.style.gridColumn = ec;
+                    movingBlock.dataset.row = er;
+                    movingBlock.dataset.column = ec;
+
+                    emptyElement.style.gridRow = srcRow;
+                    emptyElement.style.gridColumn = srcCol;
+                    emptyElement.dataset.row = srcRow;
+                    emptyElement.dataset.column = srcCol;
+
+                    if (!emptyElement.classList.contains('empty-block')) {
+                        emptyElement.classList.add('empty-block');
+                    }
+                    movingBlock.classList.remove('empty-block');
+
+                    gameState.emptyRow = srcRow;
+                    gameState.emptyCol = srcCol;
+
+                    requestAnimationFrame(function() {
+                        movingBlock.style.visibility = '';
+                        clone.remove();
+                        updateTappableHints();
+                        gameState.isAnimating = false;
+                    });
+                }
+
+                function onTransitionEnd(event) {
+                    if (event.propertyName === 'transform') {
+                        finishMove();
+                    }
+                }
+
+                clone.addEventListener('transitionend', onTransitionEnd);
+
+                gameState.animTimeout = setTimeout(function() {
+                    finishMove();
+                }, 280);
+            }
+
+            function findEmptyElement() {
+                var allBlocks = gameArea.querySelectorAll('.game-block');
+                for (var i = 0; i < allBlocks.length; i++) {
+                    if (allBlocks[i].classList.contains('empty-block')) {
+                        return allBlocks[i];
+                    }
+                }
+                return null;
+            }
+
+            function updateTappableHints() {
+                var allBlocks = gameArea.querySelectorAll('.game-block.tappable');
+                for (var i = 0; i < allBlocks.length; i++) {
+                    allBlocks[i].classList.remove('tappable');
+                }
+
+                var er = gameState.emptyRow;
+                var ec = gameState.emptyCol;
+                var directions = [
+                    [-1, 0],
+                    [1, 0],
+                    [0, -1],
+                    [0, 1]
+                ];
+                for (var d = 0; d < directions.length; d++) {
+                    var dr = directions[d][0];
+                    var dc = directions[d][1];
+                    var nr = er + dr;
+                    var nc = ec + dc;
+                    if (nr >= 1 && nr <= gameState.rows && nc >= 1 && nc <= gameState.columns) {
+                        var block = getGameBlock(nr, nc);
+                        if (block) {
+                            block.classList.add('tappable');
+                        }
+                    }
+                }
+            }
+
+            var isPageTransitionRunning = false;
+            var appContainer = document.querySelector('.app');
+
+            homeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (isPageTransitionRunning) return;
+                isPageTransitionRunning = true;
+
+                homeBtn.classList.add('pressed');
+
+                setTimeout(function() {
+                    homeBtn.classList.remove('pressed');
+                    appContainer.classList.add('slide-out');
+
+                    setTimeout(function() {
+                        window.location.href = 'home.html';
+                    }, 500);
+                }, 100);
+            });
+
+            function init() {
+                var localCoin = 0;
+                try {
+                    var storedUserData = localStorage.getItem('userdata');
+                    if (storedUserData) {
+                        var userData = JSON.parse(storedUserData);
+                        if (
+                            userData &&
+                            typeof userData.coin === 'number' &&
+                            Number.isFinite(userData.coin)
+                        ) {
+                            localCoin = Math.max(0, Math.floor(userData.coin));
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to read userdata from localStorage:', error);
+                }
+                
+                gameState.coins = localCoin;
+                updateCoinDisplay();
+
+                updateTimerDisplay();
+
+                initializeShuffledPuzzle();
+
+                initLayout();
+                startTimer();
+
+                viewIcon.src = 'off_view.png';
+                if (isViewMode) {
+                    updateViewMode();
+                }
+            }
+
+            // Expose game API
+            window.__game = {
+                state: gameState,
+                isViewMode: isViewMode,
+                toggleViewMode: toggleViewMode,
+                startTimer: startTimer,
+                stopTimer: stopTimer,
+                resetTimer: resetTimer,
+                resetGame: resetGame,
+                modifyCoins: modifyCoins,
+                goHome: goHome,
+                renderGameWorld: renderGameWorld,
+                renderFromState: renderFromState,
+                getGameBlock: getGameBlock,
+                tryMoveBlock: tryMoveBlock,
+                updateTimerDisplay: updateTimerDisplay,
+                updateCoinDisplay: updateCoinDisplay,
+                scheduleBoardSize: scheduleBoardSize,
+                applyBoardSize: applyBoardSize,
+                formatCoinDisplay: formatCoinDisplay,
+                reward: {
+                    claim: startRewardFlow,
+                    dismiss: dismissRewardPopup
+                },
+                shuffle: {
+                    createSolvedState: createSolvedState,
+                    shuffleState: shuffleState,
+                    initializeShuffledPuzzle: initializeShuffledPuzzle
+                },
+                getSessionFromABC: function() { return {}; },
+                getDeveloperCoins: function() { return { totalCoins: gameState.coins }; },
+                saveDeveloperCoins: function() {},
+                updateDeveloperCoins: function(amount) {
+                    console.warn('updateDeveloperCoins not overridden yet');
+                },
+                setDeveloperCoins: function(value) {
+                    console.warn('setDeveloperCoins not overridden yet');
+                },
+                getTotalCoins: function() { return gameState.coins; }
+            };
+
+            // Start the game
+            init();
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tile Puzzle – Login</title>
+  <style>
+    /* ─── RESET & BASE (white initially) ─────────────────────────────── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Initially pure white – no grey background */
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-y: auto;
+      transition: background 0.2s ease;
+    }
+
+    /* The app container is hidden until auth check is done */
+    .app-container {
+      width: 100%;
+      max-width: 400px;
+      min-height: 100vh;
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px;
+      position: relative;
+      transition: transform 0.5s ease-in-out;
+      border-radius: 0;
+      /* HIDDEN until auth is resolved */
+      visibility: hidden;
+      opacity: 0;
+      /* no pointer events while hidden */
+      pointer-events: none;
+    }
+
+    /* When auth is resolved and user is NOT logged in, we reveal */
+    .app-container.visible {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .app-container.slide-out {
+      transform: translateX(-100%);
+      pointer-events: none;
+    }
+
+    .top-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .app-icon img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .app-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .welcome-text {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .subtitle-text {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.5;
+      max-width: 260px;
+      font-weight: 400;
+    }
+
+    .gmail-wrapper,
+    .password-wrapper {
+      width: 100%;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 16px;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .input-field::placeholder {
+      color: #94a3b8;
+    }
+
+    .password-input {
+      padding-right: 52px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: #94a3b8;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .password-toggle:hover {
+      color: #475569;
+    }
+
+    .password-toggle svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: block;
+      pointer-events: none;
+    }
+
+    .gmail-status {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+      color: #94a3b8;
+      transition: opacity 0.2s;
+      opacity: 0;
+    }
+
+    .gmail-status svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .gmail-status .spinner {
+      animation: spin 0.8s linear infinite;
+      transform-origin: center;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .gmail-status .check-icon { color: #10b981; }
+    .gmail-status .error-icon { color: #ef4444; }
+
+    .btn-login {
+      width: 100%;
+      height: 56px;
+      background: #10b981;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+      transition: background 0.25s, transform 0.2s, box-shadow 0.25s, opacity 0.25s;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login:hover:not(:disabled) {
+      background: #059669;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-login:active:not(:disabled) {
+      transform: scale(0.97);
+      background: #047857;
+    }
+
+    .btn-login:disabled {
+      background: #94a3b8;
+      box-shadow: none;
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-login span {
+      line-height: 1.2;
+    }
+
+    .error-message {
+      color: #ef4444;
+      font-size: 13px;
+      text-align: center;
+      min-height: 20px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-bottom: 16px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .error-message.visible { opacity: 1; }
+
+    .bottom-info {
+      margin-top: auto;
+      text-align: center;
+      font-size: 12.5px;
+      color: #94a3b8;
+      line-height: 1.6;
+      padding-top: 8px;
+    }
+
+    .success-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s cubic-bezier(0.22, 1, 0.30, 1);
+      padding: 24px;
+      text-align: center;
+      border-radius: 0;
+    }
+
+    .success-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      background: #10b981;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.32);
+      transform: scale(0.7) rotate(-6deg);
+      transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.45s;
+    }
+
+    .success-overlay.active .success-icon {
+      transform: scale(1) rotate(0deg);
+      box-shadow: 0 14px 38px rgba(16, 185, 129, 0.35);
+    }
+
+    .success-icon svg {
+      width: 34px;
+      height: 34px;
+      stroke: currentColor;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .success-title,
+    .success-desc {
+      transform: translateY(12px);
+      opacity: 0;
+    }
+
+    .success-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      transition: transform 0.5s ease 0.12s, opacity 0.45s ease 0.12s;
+    }
+
+    .success-desc {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.5;
+      transition: transform 0.5s ease 0.2s, opacity 0.45s ease 0.2s;
+    }
+
+    .success-overlay.active .success-title,
+    .success-overlay.active .success-desc {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* ─── LOADING CONTAINER – completely removed from visual flow ──── */
+    .loading-container {
+      display: none !important;      /* never visible */
+      visibility: hidden !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      z-index: -999 !important;
+    }
+
+    @media (min-width: 401px) {
+      .app-container {
+        border-radius: 28px;
+        margin: 24px;
+        min-height: auto;
+      }
+      .success-overlay { border-radius: 28px; }
+    }
+
+    @media (max-width: 420px) {
+      .app-container { padding: 28px 18px; }
+      .app-title { font-size: 24px; }
+      .welcome-text { font-size: 18px; }
+      .subtitle-text { font-size: 14px; }
+      .btn-login, .input-field { height: 50px; font-size: 15px; }
+      .password-toggle { width: 36px; height: 36px; }
+      .password-toggle svg { width: 20px; height: 20px; }
+      .password-input { padding-right: 48px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+  <!-- Loading element is completely hidden and inert -->
+  <div class="loading-container" id="loadingContainer">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Checking authentication...</div>
+  </div>
+
+  <div class="top-section">
+    <div class="app-icon"><img src="app_icon.png" alt="Tile Puzzle" /></div>
+    <h1 class="app-title">Tile Puzzle</h1>
+    <h2 class="welcome-text">Welcome</h2>
+    <p class="subtitle-text">Securely continue using your Google Account.</p>
+  </div>
+
+  <!-- "New Account" checkbox সম্পূর্ণভাবে সরানো হয়েছে -->
+
+  <div class="gmail-wrapper">
+    <input type="email" id="gmailInput" class="input-field" placeholder="Enter your Gmail" autocomplete="email" maxlength="50" />
+    <span class="gmail-status" id="gmailStatus"></span>
+  </div>
+
+  <div class="password-wrapper">
+    <input type="password" id="passwordInput" class="input-field password-input" placeholder="Enter your Password" autocomplete="current-password" maxlength="30" />
+    <button type="button" class="password-toggle" aria-label="Show password">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+
+  <button class="btn-login" id="loginBtn" disabled><span>Continue</span></button>
+
+  <div class="error-message" id="errorMessage">
+    <span>⚠️</span>
+    <span id="errorText">Check ID and password again.</span>
+  </div>
+
+  <div class="bottom-info">
+    Only your Google account is used for secure authentication.<br />
+    We never ask for your password.
+  </div>
+
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="success-title" id="successTitle">Welcome!</div>
+    <div class="success-desc" id="successDesc">Authentication successful.</div>
+  </div>
+</div>
+
+<script type="module">
+  // ─── Firebase imports ──────────────────────────────────────────────
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { 
+    getAuth, 
+    onAuthStateChanged, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+  import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    updateDoc, 
+    getDoc, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  // ─── Firebase Config (my-life-cc185) ──────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyCKug1_H5gfrI1Jd1lMR9LoXCtIaOymsBk",
+    authDomain: "my-life-cc185.firebaseapp.com",
+    projectId: "my-life-cc185",
+    storageBucket: "my-life-cc185.firebasestorage.app",
+    messagingSenderId: "1020199293322",
+    appId: "1:1020199293322:web:ee9e98f7753b2b45117873",
+    measurementId: "G-K3M0BT1CBZ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // ─── DOM refs ──────────────────────────────────────────────────────
+  const appContainer = document.getElementById('appContainer');
+  const gmailInput = document.getElementById('gmailInput');
+  const gmailStatus = document.getElementById('gmailStatus');
+  const passwordInput = document.getElementById('passwordInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const toggleBtn = document.querySelector('.password-toggle');
+  const toggleIcon = toggleBtn.querySelector('svg');
+  const errorMessage = document.getElementById('errorMessage');
+  const errorText = document.getElementById('errorText');
+  const successOverlay = document.getElementById('successOverlay');
+  const successTitle = document.getElementById('successTitle');
+  const successDesc = document.getElementById('successDesc');
+
+  // ─── Icons ──────────────────────────────────────────────────────────
+  const spinnerSVG = `<svg class="spinner" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.5"><path d="M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M22 12h-4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+  const checkSVG = `<svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const errorSVG = `<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+  let passwordVisible = false;
+  const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+  const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+
+  function updateToggle(visible) { toggleIcon.innerHTML = visible ? eyeOpen : eyeClosed; }
+  toggleBtn.addEventListener('click', () => {
+    passwordVisible = !passwordVisible;
+    passwordInput.type = passwordVisible ? 'text' : 'password';
+    updateToggle(passwordVisible);
+    toggleBtn.setAttribute('aria-label', passwordVisible ? 'Hide' : 'Show');
+  });
+
+  // ─── Helpers ──────────────────────────────────────────────────────
+  function isValidGmail(email) {
+    if (!email || typeof email !== 'string') return false;
+    const t = email.trim();
+    if (t !== email || t.length > 50) return false;
+    if (!t.endsWith('@gmail.com')) return false;
+    const local = t.slice(0, -10);
+    if (local.length < 5 || t.includes(' ')) return false;
+    return /^[a-zA-Z0-9._+]+$/.test(local);
+  }
+
+  function isValidPassword(pwd) {
+    if (!pwd || typeof pwd !== 'string') return false;
+    return pwd.length >= 6 && pwd.length <= 30 && !pwd.includes(' ') && /^[!-~]+$/.test(pwd);
+  }
+
+  let authActionInProgress = false;   // ← CRITICAL flag for race condition
+  let initialCheckDone = false;
+
+  function showError(msg) {
+    errorMessage.classList.add('visible');
+    errorText.textContent = msg || 'Check ID and password again.';
+  }
+  function hideError() { errorMessage.classList.remove('visible'); }
+
+  function setGmailStatus(state) {
+    gmailStatus.style.opacity = '0';
+    if (state === 'checking') { gmailStatus.innerHTML = spinnerSVG; gmailStatus.style.opacity = '1'; }
+    else if (state === 'available') { gmailStatus.innerHTML = checkSVG; gmailStatus.style.opacity = '1'; }
+    else if (state === 'exists') { gmailStatus.innerHTML = errorSVG; gmailStatus.style.opacity = '1'; }
+    else { gmailStatus.innerHTML = ''; }
+  }
+
+  function isNetworkError(e) {
+    const msg = e?.message?.toLowerCase?.() || '';
+    return msg.includes('network') || msg.includes('fetch') || msg.includes('timeout') || msg.includes('offline') || !navigator.onLine;
+  }
+
+  // ─── Life status heartbeat ────────────────────────────────────────
+  let lifeInterval = null;
+  let currentUid = null;
+  let currentEmail = null;
+
+  async function updateLifeStatus() {
+    if (!currentUid || !currentEmail || !navigator.onLine) return;
+    try {
+      await updateDoc(doc(db, 'users', currentUid), { lifeStatusTimestamp: serverTimestamp() });
+    } catch (err) {
+      console.warn('Heartbeat update failed:', err);
+    }
+  }
+
+  function startHeartbeat(email, uid) {
+    if (lifeInterval) clearInterval(lifeInterval);
+    currentEmail = email; currentUid = uid;
+    updateLifeStatus();
+    lifeInterval = setInterval(updateLifeStatus, 300000);
+  }
+
+  function stopHeartbeat() {
+    if (lifeInterval) { clearInterval(lifeInterval); lifeInterval = null; }
+    currentUid = null; currentEmail = null;
+  }
+
+  // ─── Success ──────────────────────────────────────────────────────
+  function showSuccessAndRedirect(title, desc) {
+    successTitle.textContent = title;
+    successDesc.textContent = desc;
+    successOverlay.classList.add('active');
+    setTimeout(() => appContainer.classList.add('slide-out'), 1000);
+    setTimeout(() => {
+      window.location.replace('home.html');
+    }, 1500);
+  }
+
+  // ─── Two-day calculation ───────────────────────────────────────────
+  const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
+
+  function isLifeStatusExpired(lifeStatusTimestamp) {
+    if (lifeStatusTimestamp === null || lifeStatusTimestamp === undefined) return false;
+    let lifeTime = null;
+    if (typeof lifeStatusTimestamp.toMillis === 'function') {
+      lifeTime = lifeStatusTimestamp.toMillis();
+    } else if (typeof lifeStatusTimestamp.seconds === 'number') {
+      lifeTime = lifeStatusTimestamp.seconds * 1000;
+    }
+    if (lifeTime === null) return false;
+    const now = Date.now();
+    return (now - lifeTime) >= TWO_DAYS;
+  }
+
+  // ─── ACCOUNT COLOR SYSTEM ──────────────────────────────────────────
+  const ACCOUNT_COLORS = [
+    "#EF4444", // Red
+    "#F97316", // Orange
+    "#F59E0B", // Amber
+    "#10B981", // Emerald
+    "#06B6D4", // Cyan
+    "#3B82F6", // Blue
+    "#6366F1", // Indigo
+    "#8B5CF6", // Violet
+    "#EC4899", // Pink
+    "#14B8A6"  // Teal
+  ];
+
+  function getRandomAccountColor() {
+    const index = Math.floor(Math.random() * ACCOUNT_COLORS.length);
+    return ACCOUNT_COLORS[index];
+  }
+
+  // ─── Core login / create ──────────────────────────────────────────
+  // NOTE ON FIREBASE LIMITATION:
+  // Firebase Authentication-এর email enumeration protection enabled থাকলে
+  // client-side থেকে নিরাপদভাবে বোঝা যায় না email আগে থেকেই আছে কি না।
+  // "auth/user-not-found" এবং "auth/invalid-credential" একসাথে আসতে পারে।
+  // তাই আমরা unsafe fallback implement করি না — wrong password কখনো
+  // create account trigger করবে না। প্রথমে sign-in try করি, যদি
+  // user-not-found আসে তবেই create account করি (নিরাপদ পদ্ধতি)।
+  async function handleLoginOrCreate() {
+    if (authActionInProgress) return;
+
+    const email = gmailInput.value.trim().toLowerCase();
+    const password = passwordInput.value;
+
+    if (!isValidGmail(email) || !isValidPassword(password)) {
+      showError(isValidGmail(email) ? '' : 'Enter a valid Gmail address');
+      return;
+    }
+    hideError();
+
+    // ── SET FLAG ── prevents onAuthStateChanged from redirecting ──
+    authActionInProgress = true;
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span>Processing…</span>';
+    setGmailStatus('checking');
+
+    let signInSucceeded = false;
+
+    try {
+      // ── STEP 1: প্রথমে sign-in try করি (existing account) ────────
+      let cred = null;
+      try {
+        cred = await signInWithEmailAndPassword(auth, email, password);
+        signInSucceeded = true;
+      } catch (signInErr) {
+        const code = signInErr?.code;
+
+        // ── Wrong password / invalid credential → কখনো create করব না ──
+        if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          console.warn('⚠️ Wrong password / invalid credential – no create account');
+          showError('Check ID and password again.');
+          setGmailStatus('idle');
+          authActionInProgress = false;
+          loginBtn.innerHTML = '<span>Continue</span>';
+          if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value)) {
+            loginBtn.disabled = false;
+          }
+          return;
+        }
+
+        // ── Too many requests ──
+        if (code === 'auth/too-many-requests') {
+          showError('Too many failed attempts. Please try again later.');
+          setGmailStatus('idle');
+          authActionInProgress = false;
+          loginBtn.innerHTML = '<span>Continue</span>';
+          if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value)) {
+            loginBtn.disabled = false;
+          }
+          return;
+        }
+
+        // ── Network error ──
+        if (code === 'auth/network-request-failed' || isNetworkError(signInErr)) {
+          window.location.replace('no_internet.html');
+          return;
+        }
+
+        // ── User not found → নতুন account create করার চেষ্টা ──
+        if (code === 'auth/user-not-found') {
+          console.log('ℹ️ User not found – creating new account');
+
+          // ── CREATE ACCOUNT ────────────────────────────────────────
+          const newCred = await createUserWithEmailAndPassword(auth, email, password);
+          const newUser = newCred.user;
+          const ref = doc(db, 'users', newUser.uid);
+
+          // Generate random color for new account
+          const accountColor = getRandomAccountColor();
+
+          // ── Firestore document with coin: 0 ──────────────────────
+          await setDoc(ref, {
+            email: newUser.email,
+            coin: 0,
+            createdTimestamp: serverTimestamp(),
+            online: 'on',
+            lifeStatusTimestamp: serverTimestamp(),
+            color: accountColor
+          });
+
+          // ── Read back the created document ───────────────────────
+          const snap = await getDoc(ref);
+          const data = snap.data();
+
+          // ── Save to localStorage from Firestore data ─────────────
+          localStorage.setItem('userdata', JSON.stringify({
+            email: data.email,
+            coin: data.coin ?? 0,
+            color: data.color ?? accountColor
+          }));
+
+          startHeartbeat(newUser.email, newUser.uid);
+          showSuccessAndRedirect('Account Created!', 'Your account has been set up successfully.');
+          return;
+        }
+
+        // ── অন্য যেকোনো error ──
+        throw signInErr;
+      }
+
+      // ── STEP 2: Sign-in সফল হয়েছে → existing account login ──────
+      if (signInSucceeded && cred && cred.user) {
+        const user = cred.user;
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) {
+          await signOut(auth);
+          showError('Account data not found. Please contact support.');
+          authActionInProgress = false;
+          loginBtn.innerHTML = '<span>Continue</span>';
+          setGmailStatus('idle');
+          return;
+        }
+
+        const data = snap.data();
+        const online = data.online;
+        const life = data.lifeStatusTimestamp;
+
+        // ── online + lifeStatusTimestamp check ────────────────────
+        let allowLogin = false;
+        let errorMsg = '';
+
+        if (online === 'off') {
+          allowLogin = true;
+        } else if (online === 'on') {
+          const expired = isLifeStatusExpired(life);
+          if (expired) {
+            allowLogin = true;
+          } else {
+            allowLogin = false;
+            errorMsg = 'This account is already active on another session.';
+          }
+        } else {
+          allowLogin = false;
+          errorMsg = 'Account status is unavailable. Please contact support.';
+        }
+
+        if (!allowLogin) {
+          await signOut(auth);
+          showError(errorMsg);
+          authActionInProgress = false;
+          loginBtn.innerHTML = '<span>Continue</span>';
+          setGmailStatus('idle');
+          return;
+        }
+
+        // ── ALLOW LOGIN ────────────────────────────────────────────
+        localStorage.setItem('userdata', JSON.stringify({
+          email: data.email,
+          coin: data.coin ?? 0,
+          color: data.color ?? '#FFFFFF'
+        }));
+
+        // IMPORTANT: only update online + lifeStatusTimestamp, never color
+        await updateDoc(ref, {
+          online: 'on',
+          lifeStatusTimestamp: serverTimestamp()
+        });
+
+        startHeartbeat(user.email, user.uid);
+        showSuccessAndRedirect('Welcome Back!', 'You have been logged in successfully.');
+        return;
+      }
+
+      // ── Fallback (should not reach here) ──
+      showError('Check ID and password again.');
+      setGmailStatus('idle');
+      authActionInProgress = false;
+      loginBtn.innerHTML = '<span>Continue</span>';
+      if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value)) {
+        loginBtn.disabled = false;
+      }
+
+    } catch (err) {
+      console.error('🔥 Firebase error:', err);
+      console.error('🔥 Error code:', err?.code);
+      console.error('🔥 Error message:', err?.message);
+
+      if (err.code === 'auth/email-already-in-use') {
+        showError('This email is already registered.');
+        setGmailStatus('exists');
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showError('Check ID and password again.');
+        setGmailStatus('idle');
+      } else if (err.code === 'auth/too-many-requests') {
+        showError('Too many failed attempts. Please try again later.');
+        setGmailStatus('idle');
+      } else if (err.code === 'auth/network-request-failed' || isNetworkError(err)) {
+        window.location.replace('no_internet.html');
+        return;
+      } else {
+        if (err.code?.startsWith('firestore/') || err.code?.startsWith('permission-denied')) {
+          showError('Account authentication was created, but account data could not be saved. Please try again or contact support.');
+        } else {
+          showError('Check ID and password again.');
+        }
+        setGmailStatus('idle');
+      }
+
+      authActionInProgress = false;
+      loginBtn.innerHTML = '<span>Continue</span>';
+      if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value)) {
+        loginBtn.disabled = false;
+      }
+    } finally {
+      if (authActionInProgress && !successOverlay.classList.contains('active')) {
+        authActionInProgress = false;
+      }
+    }
+  }
+
+  // ─── Events ──────────────────────────────────────────────────────
+  gmailInput.addEventListener('input', () => { 
+    hideError(); 
+    setGmailStatus('idle'); 
+    if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value) && !authActionInProgress) {
+      loginBtn.disabled = false;
+    } else {
+      loginBtn.disabled = true;
+    }
+  });
+  passwordInput.addEventListener('input', () => { 
+    hideError(); 
+    if (isValidGmail(gmailInput.value) && isValidPassword(passwordInput.value) && !authActionInProgress) {
+      loginBtn.disabled = false;
+    } else {
+      loginBtn.disabled = true;
+    }
+  });
+  loginBtn.addEventListener('click', handleLoginOrCreate);
+
+  // ─── AUTHENTICATION STATE CHECK (with race‑condition protection) ──
+  // The container starts hidden (visibility:hidden; opacity:0)
+  // We will reveal it only if user === null
+
+  onAuthStateChanged(auth, async (user) => {
+    // ── IMPORTANT: if an explicit action is running, IGNORE ──
+    if (authActionInProgress) {
+      console.log('⏳ Auth action in progress – onAuthStateChanged ignored');
+      return;
+    }
+
+    initialCheckDone = true;
+
+    if (user) {
+      // User already authenticated → redirect immediately, no UI flash
+      window.location.replace('home.html');
+    } else {
+      // No session → reveal the login UI
+      appContainer.classList.add('visible');
+      // Reset form state
+      loginBtn.disabled = true;
+      updateToggle(false);
+      hideError();
+      setGmailStatus('idle');
+      // restore body background to the original grey after reveal
+      document.documentElement.style.background = '#f4f6f9';
+      document.body.style.background = '#f4f6f9';
+    }
+  });
+
+  // ─── Init ─────────────────────────────────────────────────────────
+  // Ensure button is disabled initially
+  loginBtn.disabled = true;
+  updateToggle(false);
+  hideError();
+  setGmailStatus('idle');
+  // Keep body pure white until auth resolves
+  document.documentElement.style.background = '#ffffff';
+  document.body.style.background = '#ffffff';
+
+  console.log('✅ Firebase Login ready – pure white until auth resolved');
+  console.log('📌 Firebase Project ID:', firebaseConfig.projectId);
+</script>
+</body>
+</html>

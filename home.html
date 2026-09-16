@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>App UI</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            will-change: transform, opacity;
+        }
+        body.page-transition {
+            transform: scale(1.08);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .play-btn {
+            display: flex;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            cursor: default;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+        .play-btn.pressed {
+            transform: scale(0.95);
+        }
+        .play-btn img {
+            display: block;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .coin-card {
+            display: flex;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        .coin-card>img {
+            display: block;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .header-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 15vh;
+            background: linear-gradient(to bottom, #000000 0%, transparent 100%);
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            pointer-events: none;
+        }
+        .profile-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            cursor: default;
+            color: white;
+            font-size: 36px;
+            line-height: 1;
+            -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .profile-btn .material-icons {
+            font-size: inherit;
+            color: white;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+        }
+        .profile-btn .profile-avatar-btn {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            background: #2d3748;
+            flex-shrink: 0;
+        }
+        .app-header-left {
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            pointer-events: none;
+        }
+        .app-header-left img {
+            display: block;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            width: 40px;
+            height: 40px;
+            max-width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-header-left span {
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+            line-height: 1;
+        }
+        .coin-number-display {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            pointer-events: none;
+            background: none;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            filter: none;
+            padding: 0;
+            margin: 0;
+        }
+        .coin-number-display .digit-0,
+        .coin-number-display .digit-1,
+        .coin-number-display .digit-2,
+        .coin-number-display .digit-3,
+        .coin-number-display .digit-4,
+        .coin-number-display .digit-5,
+        .coin-number-display .digit-6,
+        .coin-number-display .digit-7,
+        .coin-number-display .digit-8,
+        .coin-number-display .digit-9 {
+            position: relative;
+            width: auto;
+            height: 20%;
+            left: 0px;
+            top: 25px;
+            margin: 0;
+            display: block;
+        }
+        .coin-number-display .suffix-K,
+        .coin-number-display .suffix-M {
+            position: relative;
+            width: auto;
+            height: 20%;
+            left: 0px;
+            top: 25px;
+            margin: 0;
+            display: block;
+        }
+        .coin-number-display .decimal-point {
+            position: relative;
+            width: auto;
+            height: 5%;
+            left: 1px;
+            top: 40px;
+            margin: 0;
+            display: block;
+        }
+        @media (max-width: 480px) {
+            /* No popup rules remain */
+        }
+        @media (max-width: 380px) {
+            /* No popup rules remain */
+        }
+    </style>
+</head>
+<body>
+    <div class="header-gradient"></div>
+    <div class="app-header-left">
+        <img src="app_icon.png" alt="" />
+        <span>Puzzle</span>
+    </div>
+    <button class="profile-btn" type="button" id="profileBtn">
+        <span class="material-icons">account_circle</span>
+    </button>
+    <div class="app-container">
+        <div class="coin-card">
+            <img src="coin_card.png" alt="" />
+            <div class="coin-number-display" id="coinNumberDisplay"></div>
+        </div>
+        <button class="play-btn" type="button">
+            <img src="play_button.png" alt="" />
+        </button>
+    </div>
+
+    <script>
+        // ----- DOM refs -----
+        const profileBtn = document.getElementById('profileBtn');
+        const coinDisplay = document.getElementById('coinNumberDisplay');
+
+        // ----- Predefined allowed colors -----
+        const ACCOUNT_COLORS = [
+            "#EF4444", // Red
+            "#F97316", // Orange
+            "#F59E0B", // Amber
+            "#10B981", // Emerald
+            "#06B6D4", // Cyan
+            "#3B82F6", // Blue
+            "#6366F1", // Indigo
+            "#8B5CF6", // Violet
+            "#EC4899", // Pink
+            "#14B8A6"  // Teal
+        ];
+
+        // ----- helper: render coin from number (unchanged logic) -----
+        function renderCoin(coinValue) {
+            if (!coinDisplay) return;
+            const val = typeof coinValue === 'number' ? coinValue : 0;
+
+            function formatCoinValue(v) {
+                if (v < 0) v = 0;
+                if (v <= 9999) {
+                    return v.toString().split('');
+                } else if (v >= 1000000) {
+                    const m = v / 1000000;
+                    const truncated = Math.floor(m * 10) / 10;
+                    const intPart = Math.floor(truncated);
+                    const decPart = Math.round((truncated - intPart) * 10);
+                    if (decPart === 0) return [intPart.toString(), 'M'];
+                    return [intPart.toString(), '.', decPart.toString(), 'M'];
+                } else if (v >= 100000) {
+                    const k = Math.floor(v / 1000);
+                    return k.toString().split('').concat('K');
+                } else if (v >= 10000) {
+                    const tens = v / 10000;
+                    const truncated = Math.floor(tens * 10) / 10;
+                    const intPart = Math.floor(truncated);
+                    const decPart = Math.round((truncated - intPart) * 10);
+                    if (decPart === 0) return [intPart.toString(), 'K'];
+                    return [intPart.toString(), '.', decPart.toString(), 'K'];
+                } else {
+                    return v.toString().split('');
+                }
+            }
+
+            const chars = formatCoinValue(val);
+            coinDisplay.innerHTML = '';
+            const charMap = {
+                '0': '0.png',
+                '1': '1.png',
+                '2': '2.png',
+                '3': '3.png',
+                '4': '4.png',
+                '5': '5.png',
+                '6': '6.png',
+                '7': '7.png',
+                '8': '8.png',
+                '9': '9.png',
+                'K': 'K.png',
+                'M': 'M.png',
+                '.': 'decimal.png'
+            };
+            const classMap = {
+                '0': 'digit-0',
+                '1': 'digit-1',
+                '2': 'digit-2',
+                '3': 'digit-3',
+                '4': 'digit-4',
+                '5': 'digit-5',
+                '6': 'digit-6',
+                '7': 'digit-7',
+                '8': 'digit-8',
+                '9': 'digit-9',
+                'K': 'suffix-K',
+                'M': 'suffix-M',
+                '.': 'decimal-point'
+            };
+            chars.forEach(ch => {
+                const img = document.createElement('img');
+                img.src = charMap[ch] || '';
+                img.alt = ch;
+                img.draggable = false;
+                img.className = classMap[ch] || '';
+                coinDisplay.appendChild(img);
+            });
+        }
+
+        // ----- generateAvatarSVG with color support -----
+        function generateAvatarSVG(firstLetter, avatarColor) {
+            const letter = firstLetter.toUpperCase() || 'G';
+
+            // Validate color against allowed list, fallback to #e8ecf1 if invalid
+            const color = ACCOUNT_COLORS.includes(avatarColor)
+                ? avatarColor
+                : '#e8ecf1';
+
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="160"
+                     height="160"
+                     viewBox="0 0 160 160">
+                    <rect
+                        width="160"
+                        height="160"
+                        rx="80"
+                        fill="${color}"
+                    />
+                    <text
+                        x="80"
+                        y="80"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                        font-family="Arial, sans-serif"
+                        font-size="120"
+                        font-weight="500"
+                        fill="#FFFFFF">
+                        ${letter}
+                    </text>
+                </svg>
+            `;
+        }
+
+        // ----- updateProfileButtonFromGmail with color support -----
+        function updateProfileButtonFromGmail(email, avatarColor) {
+            let usernamePart = 'GUEST';
+            if (email && email.includes('@')) {
+                if (email.toLowerCase().endsWith('@gmail.com')) {
+                    usernamePart = email.replace(/@gmail\.com$/i, '').trim();
+                } else {
+                    usernamePart = email.split('@')[0].trim();
+                }
+            }
+            const formattedName = usernamePart.toUpperCase() || 'GUEST';
+            const firstLetter = formattedName.charAt(0) || 'G';
+
+            if (profileBtn) {
+                const svg = generateAvatarSVG(firstLetter, avatarColor);
+                const dataUri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+                profileBtn.innerHTML = `<img class="profile-avatar-btn" src="${dataUri}" alt="Profile" />`;
+            }
+        }
+
+        // ----- Read userdata from localStorage -----
+        const storedUserData = localStorage.getItem('userdata');
+
+        let userData = {};
+
+        try {
+            userData = storedUserData ? JSON.parse(storedUserData) : {};
+        } catch (error) {
+            userData = {};
+        }
+
+        const email =
+            typeof userData.email === 'string'
+                ? userData.email
+                : '';
+
+        const coin =
+            typeof userData.coin === 'number'
+                ? userData.coin
+                : 0;
+
+        const avatarColor =
+            typeof userData.color === 'string'
+                ? userData.color
+                : '#10B981';
+
+        // ----- Render UI -----
+        renderCoin(coin);
+        updateProfileButtonFromGmail(email, avatarColor);
+
+        // ----- Profile button: direct navigation to profile.html (NO POPUP) -----
+        if (profileBtn) {
+            profileBtn.addEventListener('click', () => {
+                window.location.href = "profile.html";
+            });
+        }
+
+        // ----- Play button behaviour (unchanged) -----
+        (function initPlay() {
+            const playBtn = document.querySelector('.play-btn');
+            if (!playBtn) return;
+            let isNavigating = false;
+            playBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (isNavigating) return;
+                isNavigating = true;
+                playBtn.classList.add('pressed');
+                setTimeout(() => {
+                    playBtn.classList.remove('pressed');
+                    document.body.classList.add('page-transition');
+                    setTimeout(() => {
+                        window.location.href = "game_screen.html";
+                    }, 500);
+                }, 100);
+            });
+        })();
+
+        console.log("App UI ready — data loaded from localStorage.");
+    </script>
+</body>
+</html>
